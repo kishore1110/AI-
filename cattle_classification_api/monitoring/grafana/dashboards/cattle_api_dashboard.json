@@ -1,0 +1,759 @@
+{
+    "__inputs": [],
+    "__requires": [
+        {
+            "type": "grafana",
+            "id": "grafana",
+            "name": "Grafana",
+            "version": "10.0.0"
+        },
+        {
+            "type": "datasource",
+            "id": "prometheus",
+            "name": "Prometheus",
+            "version": "1.0.0"
+        }
+    ],
+    "uid": "cattle-api-v1",
+    "title": "Cattle Classification API",
+    "description": "Live monitoring for the YOLOv8 + EfficientNet cattle breed classifier hosted on Hugging Face Spaces.",
+    "tags": [
+        "cattle",
+        "ml",
+        "fastapi",
+        "huggingface"
+    ],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "1m",
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 1,
+    "panels": [
+        {
+            "id": 1,
+            "type": "row",
+            "title": "API Health",
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "collapsed": false
+        },
+        {
+            "id": 2,
+            "type": "stat",
+            "title": "Models Loaded",
+            "description": "1 = Both YOLOv8 and EfficientNet are ready",
+            "gridPos": {
+                "h": 4,
+                "w": 4,
+                "x": 0,
+                "y": 1
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "orientation": "auto",
+                "textMode": "auto",
+                "colorMode": "background",
+                "graphMode": "none"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [
+                        {
+                            "type": "value",
+                            "options": {
+                                "0": {
+                                    "text": "Not Ready",
+                                    "color": "red"
+                                },
+                                "1": {
+                                    "text": "Ready",
+                                    "color": "green"
+                                }
+                            }
+                        }
+                    ],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "green",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    "color": {
+                        "mode": "thresholds"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "cattle_models_loaded",
+                    "legendFormat": "Models",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "type": "stat",
+            "title": "Total Predictions",
+            "description": "Cumulative /predict requests since last restart",
+            "gridPos": {
+                "h": 4,
+                "w": 4,
+                "x": 4,
+                "y": 1
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "orientation": "auto",
+                "textMode": "auto",
+                "colorMode": "background",
+                "graphMode": "area"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "blue",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "color": {
+                        "mode": "fixed",
+                        "fixedColor": "blue"
+                    },
+                    "unit": "short"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "cattle_predict_requests_total",
+                    "legendFormat": "Requests",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "type": "stat",
+            "title": "Success Rate",
+            "description": "% of requests that returned a detected breed",
+            "gridPos": {
+                "h": 4,
+                "w": 4,
+                "x": 8,
+                "y": 1
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "orientation": "auto",
+                "textMode": "auto",
+                "colorMode": "background",
+                "graphMode": "none"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percentunit",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 0.5
+                            },
+                            {
+                                "color": "green",
+                                "value": 0.8
+                            }
+                        ]
+                    },
+                    "color": {
+                        "mode": "thresholds"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "cattle_predict_success_total / clamp_min(cattle_predict_requests_total, 1)",
+                    "legendFormat": "Success Rate",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 5,
+            "type": "stat",
+            "title": "Error Rate",
+            "description": "% of requests that threw an exception",
+            "gridPos": {
+                "h": 4,
+                "w": 4,
+                "x": 12,
+                "y": 1
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "orientation": "auto",
+                "textMode": "auto",
+                "colorMode": "background",
+                "graphMode": "none"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percentunit",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 0.05
+                            },
+                            {
+                                "color": "red",
+                                "value": 0.15
+                            }
+                        ]
+                    },
+                    "color": {
+                        "mode": "thresholds"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "cattle_predict_errors_total / clamp_min(cattle_predict_requests_total, 1)",
+                    "legendFormat": "Error Rate",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 6,
+            "type": "stat",
+            "title": "No Cattle Detected",
+            "description": "Requests where no cattle was found in the image",
+            "gridPos": {
+                "h": 4,
+                "w": 4,
+                "x": 16,
+                "y": 1
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "orientation": "auto",
+                "textMode": "auto",
+                "colorMode": "background",
+                "graphMode": "area"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "orange",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "color": {
+                        "mode": "fixed",
+                        "fixedColor": "orange"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "cattle_predict_no_cattle_total",
+                    "legendFormat": "No Cattle",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 7,
+            "type": "stat",
+            "title": "Avg Latency",
+            "description": "Average end-to-end prediction latency",
+            "gridPos": {
+                "h": 4,
+                "w": 4,
+                "x": 20,
+                "y": 1
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "orientation": "auto",
+                "textMode": "auto",
+                "colorMode": "background",
+                "graphMode": "none"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 5
+                            },
+                            {
+                                "color": "red",
+                                "value": 15
+                            }
+                        ]
+                    },
+                    "color": {
+                        "mode": "thresholds"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "rate(cattle_predict_latency_seconds_sum[10m]) / clamp_min(rate(cattle_predict_latency_seconds_count[10m]), 0.001)",
+                    "legendFormat": "Avg Latency",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 8,
+            "type": "row",
+            "title": " Request Traffic",
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 5
+            },
+            "collapsed": false
+        },
+        {
+            "id": 9,
+            "type": "timeseries",
+            "title": "Request Rate (req/min)",
+            "description": "Rate of incoming /predict requests over time",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 6
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                },
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqpm",
+                    "custom": {
+                        "lineWidth": 2,
+                        "fillOpacity": 15,
+                        "gradientMode": "opacity"
+                    },
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "rate(cattle_predict_requests_total[5m]) * 60",
+                    "legendFormat": "Total Requests",
+                    "refId": "A"
+                },
+                {
+                    "expr": "rate(cattle_predict_success_total[5m]) * 60",
+                    "legendFormat": "Successful",
+                    "refId": "B"
+                },
+                {
+                    "expr": "rate(cattle_predict_no_cattle_total[5m]) * 60",
+                    "legendFormat": "No Cattle",
+                    "refId": "C"
+                },
+                {
+                    "expr": "rate(cattle_predict_errors_total[5m]) * 60",
+                    "legendFormat": "Errors",
+                    "refId": "D"
+                }
+            ]
+        },
+        {
+            "id": 10,
+            "type": "timeseries",
+            "title": "Prediction Latency (seconds)",
+            "description": "p50, p90 and p99 end-to-end latency",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 6
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                },
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s",
+                    "custom": {
+                        "lineWidth": 2,
+                        "fillOpacity": 10,
+                        "gradientMode": "opacity"
+                    },
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.50, rate(cattle_predict_latency_seconds_bucket[10m]))",
+                    "legendFormat": "p50 (median)",
+                    "refId": "A"
+                },
+                {
+                    "expr": "histogram_quantile(0.90, rate(cattle_predict_latency_seconds_bucket[10m]))",
+                    "legendFormat": "p90",
+                    "refId": "B"
+                },
+                {
+                    "expr": "histogram_quantile(0.99, rate(cattle_predict_latency_seconds_bucket[10m]))",
+                    "legendFormat": "p99 (worst)",
+                    "refId": "C"
+                }
+            ]
+        },
+        {
+            "id": 11,
+            "type": "row",
+            "title": "Breed Analytics",
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 14
+            },
+            "collapsed": false
+        },
+        {
+            "id": 12,
+            "type": "piechart",
+            "title": "Top Breeds Predicted",
+            "description": "Distribution of cattle breeds detected across all requests",
+            "gridPos": {
+                "h": 10,
+                "w": 10,
+                "x": 0,
+                "y": 15
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "pieType": "donut",
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                },
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "right",
+                    "values": [
+                        "value",
+                        "percent"
+                    ]
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "unit": "short"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "topk(15, cattle_breed_predicted_total)",
+                    "legendFormat": "{{breed}}",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 13,
+            "type": "bargauge",
+            "title": "Breed Prediction Counts (Top 15)",
+            "description": "Cumulative predictions per breed",
+            "gridPos": {
+                "h": 10,
+                "w": 14,
+                "x": 10,
+                "y": 15
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "orientation": "horizontal",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "showUnfilled": true
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "blue",
+                                "value": null
+                            },
+                            {
+                                "color": "green",
+                                "value": 10
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 50
+                            }
+                        ]
+                    },
+                    "color": {
+                        "mode": "thresholds"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "topk(15, cattle_breed_predicted_total)",
+                    "legendFormat": "{{breed}}",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 14,
+            "type": "row",
+            "title": "HTTP Layer (FastAPI Instrumentator)",
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 25
+            },
+            "collapsed": false
+        },
+        {
+            "id": 15,
+            "type": "timeseries",
+            "title": "HTTP Status Code Rates",
+            "description": "Breakdown of HTTP responses by status code group",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 26
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                },
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps",
+                    "custom": {
+                        "lineWidth": 2,
+                        "fillOpacity": 10
+                    },
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "rate(http_requests_total{status_code=~\"2..\"}[5m])",
+                    "legendFormat": "2xx Success",
+                    "refId": "A"
+                },
+                {
+                    "expr": "rate(http_requests_total{status_code=~\"4..\"}[5m])",
+                    "legendFormat": "4xx Client Error",
+                    "refId": "B"
+                },
+                {
+                    "expr": "rate(http_requests_total{status_code=~\"5..\"}[5m])",
+                    "legendFormat": "5xx Server Error",
+                    "refId": "C"
+                }
+            ]
+        },
+        {
+            "id": 16,
+            "type": "timeseries",
+            "title": "HTTP Request Duration (p95)",
+            "description": "95th percentile duration across all routes",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 26
+            },
+            "datasource": {
+                "type": "prometheus",
+                "uid": "cattle-prometheus"
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                },
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                }
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s",
+                    "custom": {
+                        "lineWidth": 2,
+                        "fillOpacity": 10
+                    },
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum by(handler, le) (rate(http_request_duration_seconds_bucket[5m])))",
+                    "legendFormat": "{{handler}}",
+                    "refId": "A"
+                }
+            ]
+        }
+    ]
+}

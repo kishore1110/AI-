@@ -1,0 +1,57 @@
+# ---------------------------------------------------------------------------
+# Local monitoring stack for Cattle Classification API
+# Run: docker compose up -d
+# Grafana:    http://localhost:3000   (admin / admin)
+# Prometheus: http://localhost:9090
+# ---------------------------------------------------------------------------
+
+services:
+  # ---------- Prometheus ----------
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: cattle_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus   # persist TSDB — survives compose down
+    ports:
+      - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    networks:
+      - monitoring
+
+  # ---------- Grafana ----------
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: cattle_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/cattle_api_dashboard.json
+    volumes:
+      - grafana_data:/var/lib/grafana
+      # Auto-provision Prometheus datasource
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      # Auto-provision dashboard loader
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      # Pre-built dashboard JSON
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  grafana_data:
+  prometheus_data:    # 15-day rolling history survives restarts
